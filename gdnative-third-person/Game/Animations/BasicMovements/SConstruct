@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+import sys
+import importlib
+
+# Nuclex SCons libraries
+sys.path.append('../../../addons/scripts/scons')
+nuclex = importlib.import_module('nuclex')
+
+# ----------------------------------------------------------------------------------------------- #
+
+environment = nuclex.create_blender_environment()
+
+environment.export_animations_collada(
+    './Models/Dummy-Locomotion.dae', # Target file for the animation export
+    '../../Actors/Dummy/Models/Dummy.Rigify.blend', # Master model that is being animated
+    './Models/Dummy-Locomotion.blend', # Blendfile containing the animations
+    [ 'Dummy-*' ] # Animation clips (Blender: "actions") that will be exported
+)
+
+# ----------------------------------------------------------------------------------------------- #
+
+#AlwaysBuild(export)

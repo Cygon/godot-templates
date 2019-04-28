@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+
+import sys
+import importlib
+import platform
+
+# Nuclex SCons libraries
+sys.path.append('../scripts/scons')
+nuclex = importlib.import_module('nuclex')
+
+# ----------------------------------------------------------------------------------------------- #
+
+universal_target_name = 'Nuclex.CppExample'
+
+# ----------------------------------------------------------------------------------------------- #
+
+def _add_godot_cpp_package(environment):
+    """Adds the Godot-CPP package to the build (setting up all necessary include directories,
+    library directories and linking the appropriate static library of godot-cpp.
+
+    @param  environment  Environment to which the Godot-CPP package will be added."""
+
+    # Include directories for Godot, its C++ headers and the Godot-CPP library
+    environment.add_include_directory('../godot-cpp/godot_headers/', system=False)
+    environment.add_include_directory('../godot-cpp/include/', system=False)
+    environment.add_include_directory('../godot-cpp/include/core/', system=False)
+    environment.add_include_directory('../godot-cpp/include/gen/', system=False)
+
+    # Library directory
+    environment.add_library_directory('../godot-cpp/bin/')
+
+    if platform.system() == 'Windows':
+        if environment.is_debug_build():
+            environment.Append(LIBS=['libgodot-cpp.windows.debug.64.lib'])
+        else:
+            environment.Append(LIBS=['libgodot-cpp.windows.release.64.lib'])
+    else:
+        if environment.is_debug_build():
+            environment.Append(LIBS=['godot-cpp.linux.debug.64'])
+        else:
+            environment.Append(LIBS=['godot-cpp.linux.release.64'])
+
+# ----------------------------------------------------------------------------------------------- #
+
+common_environment = nuclex.create_cplusplus_environment()
+
+library_environment = common_environment.Clone()
+_add_godot_cpp_package(library_environment)
+
+library = library_environment.build_library(universal_target_name)
+
+library_environment.Install('bin', library)
+
+# ----------------------------------------------------------------------------------------------- #
+
+# Always run the unit tests
+#AlwaysBuild(run_unit_tests)

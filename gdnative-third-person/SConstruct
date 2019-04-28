@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+
+import importlib
+import os
+import platform
+import sys
+import SCons
+
+# Nuclex SCons libraries
+sys.path.append('addons/scripts/scons')
+nuclex = importlib.import_module('nuclex')
+
+# ----------------------------------------------------------------------------------------------- #
+
+def _get_godot_cpp_library_name(environment):
+    """Returns the name of the library built by the Godot-CPP build script.
+    I don't like hardcoding this, but it's the only way of getting this.
+
+    @param  environment  SCons environment from which Godot-CPP is being built
+    @returns The filename of the library produced when compiling Godot-CPP"""
+
+    if platform.system() == 'Windows':
+        if environment.is_debug_build():
+            return 'libgodot-cpp.windows.debug.64.lib'
+        else:
+            return 'libgodot-cpp.windows.release.64.lib'
+    else:
+        if environment.is_debug_build():
+            return 'libgodot-cpp.linux.debug.64.a'
+        else:
+            return 'libgodot-cpp.linux.release.64.a'
+
+
+# ----------------------------------------------------------------------------------------------- #
+
+environment = nuclex.create_generic_environment()
+
+
+# 1. Export all Blender models to Collada
+#
+# This recursively looks for SConstruct files in all subdirectories of the 'Game'
+# directory and builds them with SCons. Since SCons keeps track of all inputs and
+# generated outputs, this will intelligently only process changed files.
+#
+nuclex.build_all(environment, 'Game')
+
+
+# 2. Compile Godot-CPP, a wrapper library we require
+#
+# If wish I could to this via env.SConscript() to parallelize the build steps
+# inside the SConstruct file alongside all the others, but I haven't found a
+# way to pass the parameters (target=debug, etc.) along yet.
+#
+godot_cpp_library_path = os.path.join(
+    'addons', 'godot-cpp', 'bin', _get_godot_cpp_library_name(environment)
+)
+if environment.is_debug_build():
+    godot_cpp_library_target='debug'
+else:
+    godot_cpp_library_target='release'
+
+environment.build_scons(
+    source = 'addons/godot-cpp/SConstruct',
+    arguments = '-j8 --directory=${SOURCE.dir} bits=64 target=' + godot_cpp_library_target,
+    target = godot_cpp_library_path
+)
+
+
+# 3. Compile the GDnative library specific to this game
+#
+# If the library output path for Godot-CPP above was set correctly,
+# this will only trigger after the Godot-CPP has been built. If not, well,
+# you'll get an error about a missing library here...
+#
+compile_game_logic = environment.SConscript('addons/example-cpp/SConstruct')
+
+# ----------------------------------------------------------------------------------------------- #
