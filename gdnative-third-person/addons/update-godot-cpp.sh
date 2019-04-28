@@ -18,11 +18,16 @@ git clone \
 	--gdnative-generate-json-api godot-cpp/godot_headers/api.json
 
 # Compile godot-cpp
-#cd godot-cpp
-#scons -j15 platform=linux bits=64 generate_bindings=yes
+pushd .
+cd godot-cpp
+
+scons -j15 platform=linux bits=64 generate_bindings=yes
+
+# This is now done by the main build script
 #scons -j15 \
 #	godotbinpath="/opt/godot-git/bin/godot.x11.opt.tools.64" \
 #	platform=linux \
 #	bits=64
 #
-#cd ..
+
+popd

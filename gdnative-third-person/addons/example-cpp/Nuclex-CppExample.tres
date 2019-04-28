@@ -3,5 +3,8 @@
 [resource]
 config_file = Object(ConfigFile,"script":null)
 
+entry/Windows.64 = "res://addons/example-cpp/bin/Nuclex.CppExample.dll"
 entry/X11.64 = "res://addons/example-cpp/bin/libNuclexCppExample.so"
+dependency/Windows.64 = [  ]
 dependency/X11.64 = [  ]
+
