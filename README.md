@@ -7,6 +7,8 @@ usage of the Godot Game Engine (https://github.com/godotengine/godot).
 GDNative Third Person Template
 ------------------------------
 
+[![GDNative Third Person Template Screenshot](/images/gdnative-third-person-screenshot1.png)](https://github.com/Cygon/godot-templates/tree/master/gdnative-third-person)
+
 **Godot Version**: 3.1
 **Status**: work in progress, but fully functional
 **Download**: [gdnative-third-person-template-0.1.0.7z](https://github.com/Cygon/godot-templates/blob/master/releases/gdnative-third-person-template-0.1.0.7z)
