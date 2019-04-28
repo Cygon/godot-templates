@@ -1,0 +1,3 @@
+[submodule "gdnative-third-person/addons/godot-cpp"]
+	path = gdnative-third-person/addons/godot-cpp
+	url = https://github.com/GodotNativeTools/godot-cpp.git
