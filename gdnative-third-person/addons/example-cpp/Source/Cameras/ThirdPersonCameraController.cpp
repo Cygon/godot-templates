@@ -6,15 +6,10 @@
 #include <Input.hpp>
 #include <GlobalConstants.hpp>
 #include <InputEventMouseMotion.hpp>
-#include <InputEventKey.hpp>
-#include <SceneTree.hpp>
-#include <Viewport.hpp>
-#include <World.hpp>
-#include <Spatial.hpp>
+#include <InputEventMouseButton.hpp>
 #include <Camera.hpp>
 
 #include <cassert>
-#include <gen/PhysicsServer.hpp>
 
 namespace {
 
@@ -35,8 +30,11 @@ namespace {
   /// <summary>Default for the longest distance the camera can have from the target</summary>
   const float DefaultMaximumDistance = 10.0f;
 
+  /// <summary>Default for the distance the camera currently has from the target</summary>
+  const float DefaultDistance = 3.0f;
+
   /// <summary>Default camera rotation amount per mouse movement</summary>
-  const godot::Vector2 DefaultRotationDegreesPerMickey = godot::Vector2(0.5f, 0.5f);
+  const godot::Vector2 DefaultRotationDegreesPerMickey = godot::Vector2(0.25f, 0.25f);
 
   /// <summary>Default collision mask for things that block the camera's view</summary>
   const std::int64_t DefaultViewBlockingMask = 2147483647;
@@ -69,6 +67,7 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
     MouseWheelZoomSensitivity(DefaultMouseWheelZoomSensitivity),
     MinimumDistance(DefaultMinimumDistance),
     MaximumDistance(DefaultMaximumDistance),
+    Distance(DefaultDistance),
     RotationDegreesPerMickey(DefaultRotationDegreesPerMickey),
     ViewBlockingMask(DefaultViewBlockingMask) {}
 
@@ -81,6 +80,7 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
     this->MouseWheelZoomSensitivity = DefaultMouseWheelZoomSensitivity;
     this->MinimumDistance = DefaultMinimumDistance;
     this->MaximumDistance = DefaultMaximumDistance;
+    this->Distance = DefaultDistance;
     this->RotationDegreesPerMickey = DefaultRotationDegreesPerMickey;
     this->ViewBlockingMask = DefaultViewBlockingMask;
   }
@@ -100,36 +100,53 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
 
     godot::register_property<ThirdPersonCameraController, godot::NodePath>(
       "camera_node_path",
-      &CameraController::CameraNodePath, godot::NodePath("../..")
+      &CameraController::CameraNodePath,
+      godot::NodePath(CameraController::GetDefaultCameraNodePath().c_str())
     );
     godot::register_property<ThirdPersonCameraController, float>(
       "fade_level",
-      &CameraController::FadeLevel, 1.0f
+      &CameraController::FadeLevel, CameraController::GetDefaultFadeLevel(),
+      GODOT_METHOD_RPC_MODE_DISABLED,
+      GODOT_PROPERTY_USAGE_DEFAULT,
+      GODOT_PROPERTY_HINT_RANGE, "0.0,1.0,0.01"
     );
     godot::register_property<ThirdPersonCameraController, godot::NodePath>(
       "target_node_path",
-      &CameraController::TargetNodePath, godot::NodePath()
+      &CameraController::TargetNodePath,
+      godot::NodePath(CameraController::GetDefaultTargetNodePath().c_str())
     );
 
-    godot::register_property<ThirdPersonCameraController, godot::NodePath>(
-      "camera_node_path",
-      &ThirdPersonCameraController::CameraNodePath, godot::NodePath(DefaultCameraNodePath.c_str())
-    );
     godot::register_property<ThirdPersonCameraController, godot::Vector3>(
       "offset",
       &ThirdPersonCameraController::Offset, DefaultOffset
     );
     godot::register_property<ThirdPersonCameraController, float>(
       "mouse_wheel_zoom_sensitivity",
-      &ThirdPersonCameraController::MouseWheelZoomSensitivity, DefaultMouseWheelZoomSensitivity
+      &ThirdPersonCameraController::MouseWheelZoomSensitivity, DefaultMouseWheelZoomSensitivity,
+      GODOT_METHOD_RPC_MODE_DISABLED,
+      GODOT_PROPERTY_USAGE_DEFAULT,
+      GODOT_PROPERTY_HINT_RANGE, "0.1,10.0,0.25"
     );
     godot::register_property<ThirdPersonCameraController, float>(
       "minimum_distance",
-      &ThirdPersonCameraController::MinimumDistance, DefaultMinimumDistance
+      &ThirdPersonCameraController::MinimumDistance, DefaultMinimumDistance,
+      GODOT_METHOD_RPC_MODE_DISABLED,
+      GODOT_PROPERTY_USAGE_DEFAULT,
+      GODOT_PROPERTY_HINT_RANGE, "0.1,10.0,0.1"
     );
     godot::register_property<ThirdPersonCameraController, float>(
       "maximum_distance",
-      &ThirdPersonCameraController::MaximumDistance, DefaultMaximumDistance
+      &ThirdPersonCameraController::MaximumDistance, DefaultMaximumDistance,
+      GODOT_METHOD_RPC_MODE_DISABLED,
+      GODOT_PROPERTY_USAGE_DEFAULT,
+      GODOT_PROPERTY_HINT_RANGE, "0.1,10.0,0.1"
+    );
+    godot::register_property<ThirdPersonCameraController, float>(
+      "distance",
+      &ThirdPersonCameraController::Distance, DefaultDistance,
+      GODOT_METHOD_RPC_MODE_DISABLED,
+      GODOT_PROPERTY_USAGE_DEFAULT,
+      GODOT_PROPERTY_HINT_RANGE, "0.1,10.0,0.1"
     );
     godot::register_property<ThirdPersonCameraController, godot::Vector2>(
       "rotation_degrees_per_mickey",
@@ -137,7 +154,10 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
     );
     godot::register_property<ThirdPersonCameraController, std::int64_t >(
       "view_blocking_mask",
-      &ThirdPersonCameraController::ViewBlockingMask, DefaultViewBlockingMask
+      &ThirdPersonCameraController::ViewBlockingMask, DefaultViewBlockingMask,
+      GODOT_METHOD_RPC_MODE_DISABLED,
+      GODOT_PROPERTY_USAGE_DEFAULT,
+      GODOT_PROPERTY_HINT_LAYERS_3D_PHYSICS
     );
   }
 
@@ -149,7 +169,7 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
       return;
     }
     //godot::Godot::print("DebugFlyCamera: capturing mouse cursor");
-    //inputManager->set_mouse_mode(godot::Input::MOUSE_MODE_CAPTURED);
+    inputManager->set_mouse_mode(godot::Input::MOUSE_MODE_CAPTURED);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -179,7 +199,6 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
 
     moveToOrbitPosition(*cameraNode, *targetNode);
 
-
 #if defined(REPRODUCE_GODOT_SEGFAULT)
     godot::Node *cameraAsNode = get_node(this->CameraNodePath);
     godot::String class_name = cameraAsNode->get_class();
@@ -200,6 +219,25 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
     );
     if(mouseMotionEvent != nullptr) {
       processMouseMotion(*mouseMotionEvent);
+      return;
+    }
+
+    godot::InputEventMouseButton *buttonEvent = (
+      godot::Object::cast_to<godot::InputEventMouseButton>(inputEvent)
+    );
+    if(buttonEvent != nullptr) {
+      if(buttonEvent->is_pressed()) {
+        switch(buttonEvent->get_button_index()) {
+          case godot::GlobalConstants::BUTTON_WHEEL_UP: {
+            this->Distance = std::max(this->Distance - this->MouseWheelZoomSensitivity, this->MinimumDistance);
+            break;
+          }
+          case godot::GlobalConstants::BUTTON_WHEEL_DOWN: {
+            this->Distance = std::min(this->Distance + this->MouseWheelZoomSensitivity, this->MaximumDistance);
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -285,7 +323,7 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
     //cameraNode.set_translation(targetPosition + this->Offset);
     godot::Transform cameraTransform = cameraNode.get_transform();
     cameraTransform.origin = targetPosition + this->Offset;
-    cameraTransform.translate(0.0f, 0.0f, 3.0f);
+    cameraTransform.translate(0.0f, 0.0f, this->Distance);
     cameraNode.set_transform(cameraTransform);
 
 
@@ -323,6 +361,7 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
   godot::Dictionary ThirdPersonCameraController::raycast(
     const godot::Vector3 &from, godot::Vector3 &to
   ) {
+#if defined(GODOT_3_1_SEGFAULT_FIXED)
     godot::Viewport *viewport = get_viewport();
     if(viewport == nullptr) {
       godot::Godot::print("ERROR: Could not obtain Viewport the scene is rendered through");
@@ -334,63 +373,10 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
       godot::Godot::print("ERROR: Could not obtain physics World from current Viewport");
       return godot::Dictionary();
     }
-
-
-#if GODOT_3_1_CRASH_FIXED // Godot 3.1 crashes in space_get_direct_state()
-    godot::RID spaceId = world->get_space();
-    godot::PhysicsDirectSpaceState *state = (
-      godot::PhysicsServer::get_singleton()->space_get_direct_state(spaceId)
-    );
-#elif GODOT_3_1_OTHER_CRASH_FIXED // Godot 3.1 crashes in get_direct_space_state()
-    godot::PhysicsDirectSpaceState *state = world->get_direct_space_state();
-    if(state == nullptr) {
-      godot::Godot::print("ERROR: Could not obtain physics space state from current World");
-      return;
-    }
-#else // Ugly workaround calling methods dynamically as if by GDScript...
-
-    // If the get_direct_space_state() method exists, call it by name
-    const static godot::String GetDirectSpaceStateMethodName = "get_direct_space_state";
-    if(world->has_method(GetDirectSpaceStateMethodName)) {
-      godot::Variant spaceStateAsVariant = world->call(
-        GetDirectSpaceStateMethodName
-      );
-
-      // This also causes the crash we're trying to avoid :-(
-      //godot::Object *spaceState = godot::Object::___get_from_variant(spaceStateAsVariant);
-
-      // And now, whatever we've got doesn't have an intersect_ray() method. WTF?
-
-      // We've got the space state now, try to call the intersect_ray() method
-      const static godot::String IntersectRayMethodName = "intersect_ray";
-      if(spaceStateAsVariant.has_method(IntersectRayMethodName)) {
-        godot::Godot::print("intersect_ray() exists");
-
-        //godot::Array arguments = godot::Array::make(
-        //  IntersectRayMethodName, from, to, godot::Array(), this->ViewBlockingMask, true, false
-        //);
-
-        godot::Variant intersectRayArguments[6];
-        intersectRayArguments[0] = godot::Variant(from);
-        intersectRayArguments[1] = godot::Variant(to);
-        intersectRayArguments[2] = godot::Variant(godot::Array());
-        intersectRayArguments[3] = godot::Variant(this->ViewBlockingMask);
-        intersectRayArguments[4] = godot::Variant(true);
-        intersectRayArguments[5] = godot::Variant(false);
-
-        const godot::Variant *arguments = intersectRayArguments;
-        godot::Variant dictionaryAsVariant = spaceStateAsVariant.call(
-          IntersectRayMethodName, &arguments, 6
-        );
-
-        godot::Godot::print("Success!");
-        return dictionaryAsVariant;
-      }
-    }
+#endif
 
     // If this point is reached, nothing we tried worked :-(
     return godot::Dictionary();
-#endif
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -34,6 +34,16 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
     /// <summary>Registers the methods callable from within Godot to the engine</summary>
     public: NUCLEX_CPPEXAMPLE_API static void _register_methods();
 
+    /// <summary>Returns the node path to the camera a controller starts out with</summary>
+    /// <returns>The default node path to the camera</returns>
+    public: static std::string GetDefaultCameraNodePath();
+    /// <summary>Returns the fade level the camera controller starts out with</summary>
+    /// <returns>The fade level with which the camera controller starts out</returns>
+    public: static float GetDefaultFadeLevel();
+    /// <summary>Returns the default node path for the target node</summary>
+    /// <returns>The default node path to the controller's target node</returns>
+    public: static std::string GetDefaultTargetNodePath();
+
     /// <summary>Called once per rendered frame to update scene nodes</summary>
     /// <param name="deltaSeconds">Amount of time passed since the previous update</param>
     protected: virtual void process(float deltaSeconds);

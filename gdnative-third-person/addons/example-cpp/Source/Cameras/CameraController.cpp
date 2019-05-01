@@ -42,6 +42,24 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
 
   // ------------------------------------------------------------------------------------------- //
 
+  std::string CameraController::GetDefaultCameraNodePath() {
+    return DefaultCameraNodePath;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  float CameraController::GetDefaultFadeLevel() {
+    return DefaultFadeLevel;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string CameraController::GetDefaultTargetNodePath() {
+    return DefaultTargetNodePath;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   void CameraController::_register_methods() {
     godot::register_method("_process", &CameraController::process);
 
@@ -52,7 +70,10 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
 
     godot::register_property<CameraController, float>(
       "fade_level",
-      &CameraController::FadeLevel, DefaultFadeLevel
+      &CameraController::FadeLevel, DefaultFadeLevel,
+      GODOT_METHOD_RPC_MODE_DISABLED,
+      GODOT_PROPERTY_USAGE_DEFAULT,
+      GODOT_PROPERTY_HINT_RANGE, "0.0,1.0,0.01"
     );
 
     godot::register_property<CameraController, godot::NodePath>(

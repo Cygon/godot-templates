@@ -89,10 +89,13 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
 
     /// <summary>How much turning the mouse wheel adjusts the camera's distance</summary>
     public: float MouseWheelZoomSensitivity;
-    /// <summary>Shortest distance the camera controller can be adjusted to</summary>
+    /// <summary>Shortest possible distance of the camera from the target node</summary>
     public: float MinimumDistance;
-    /// <summary>Longest distance the camera controller can be adjusted to</summary>
+    /// <summary>Longest possible distance of the camera from the target node</summary>
     public: float MaximumDistance;
+
+    /// <summary>Current Distance of the camera from the target node</summary>
+    public: float Distance;
 
     /// <summary>Amount of rotation the mouse will perform for one mickey's movement</summary>
     /// <remarks>
