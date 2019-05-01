@@ -6,6 +6,8 @@
 #include "Actors/CharacterController.h"
 #include "Actors/CharacterPresenter.h"
 #include "Cameras/DebugFlyCamera.h"
+#include "Cameras/CameraController.h"
+#include "Cameras/ThirdPersonCameraController.h"
 #include "Geometry/Trigonometry.h"
 
 // --------------------------------------------------------------------------------------------- //
@@ -31,6 +33,8 @@ extern "C" void NUCLEX_CPPEXAMPLE_API godot_nativescript_init(void *handle) {
   godot::register_class<Nuclex::CppExample::Actors::CharacterController>();
   godot::register_class<Nuclex::CppExample::Actors::CharacterPresenter>();
   godot::register_class<Nuclex::CppExample::Cameras::DebugFlyCamera>();
+  godot::register_class<Nuclex::CppExample::Cameras::CameraController>();
+  godot::register_class<Nuclex::CppExample::Cameras::ThirdPersonCameraController>();
   godot::register_class<Nuclex::CppExample::Geometry::Trigonometry>();
 }
 

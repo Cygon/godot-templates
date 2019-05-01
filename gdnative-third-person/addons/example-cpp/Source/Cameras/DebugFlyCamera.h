@@ -59,7 +59,7 @@ namespace Nuclex { namespace CppExample { namespace Cameras {
     /// <summary>Returns the active Godot input manager</summary>
     /// <returns>The active godot input manager</returns>
     private: godot::Input *getInputManager() const;
-    
+
     /// <summary>Boundaries of the area the camera can fly around in</summary>
     public: godot::AABB Boundaries;
     /// <summary>How fast the camera moves around in Godot units per second</summary>
