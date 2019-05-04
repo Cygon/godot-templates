@@ -1,8 +1,9 @@
-[gd_scene load_steps=26 format=2]
+[gd_scene load_steps=27 format=2]
 
 [ext_resource path="res://Game/Blocks/Materials/Blocks-LightGray.tres" type="Material" id=1]
 [ext_resource path="res://Game/Blocks/Materials/Blocks-DarkGray.tres" type="Material" id=2]
-[ext_resource path="res://Game/Actors/Dummy/Dummy.tscn" type="PackedScene" id=3]
+[ext_resource path="res://addons/example-cpp/Code/Cameras/ThirdPersonCameraController.gdns" type="Script" id=3]
+[ext_resource path="res://Game/Actors/Dummy/Dummy.tscn" type="PackedScene" id=4]
 
 [sub_resource type="CubeMesh" id=1]
 size = Vector3( 40, 2, 40 )
@@ -263,8 +264,14 @@ navmesh = SubResource( 22 )
 
 [node name="Actors" type="Node" parent="."]
 
-[node name="Dummy" parent="Actors" instance=ExtResource( 3 )]
+[node name="Dummy" parent="Actors" instance=ExtResource( 4 )]
 transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0.892468, 4 )
 
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 1, 0, 0, 0, 0.887129, 0.461521, 0, -0.461521, 0.887129, -0.593105, 5.4482, 8.56119 )
+
+[node name="Components" type="Node" parent="Camera"]
+
+[node name="CameraController" type="Node" parent="Camera/Components"]
+script = ExtResource( 3 )
+target_node_path = NodePath("../../../Actors/Dummy")

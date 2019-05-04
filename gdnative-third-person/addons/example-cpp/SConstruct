@@ -13,15 +13,15 @@ godot_cpp = importlib.import_module('godot-cpp')
 
 # ----------------------------------------------------------------------------------------------- #
 
-common_environment = nuclex.create_cplusplus_environment()
+environment = nuclex.create_cplusplus_environment()
 
-godot_cpp.verify_directory(common_environment, os.path.join('..', 'godot-cpp'))
+godot_cpp.check_godot_headers_directory(environment, os.path.join('..', 'godot-cpp'))
 
 # ----------------------------------------------------------------------------------------------- #
 
 universal_target_name = 'Nuclex.CppExample'
 
-library_environment = common_environment.Clone()
+library_environment = environment.Clone()
 godot_cpp.add_package(library_environment, os.path.join('..', 'godot-cpp'))
 library = library_environment.build_library(universal_target_name)
 library_environment.Install('bin', library)
@@ -30,3 +30,5 @@ library_environment.Install('bin', library)
 
 # Always run the unit tests
 #AlwaysBuild(run_unit_tests)
+
+#Return(library)

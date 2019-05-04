@@ -60,7 +60,7 @@ Execute(godot_cpp.compile(cplusplus_environment, godot_cpp_directory))
 # this will only trigger after the Godot-CPP has been built. If not, well,
 # you'll get an error about a missing library here...
 #
-#compile_game_logic = environment.SConscript('addons/example-cpp/SConstruct')
+compile_game_logic = environment.SConscript('addons/example-cpp/SConstruct')
 #Depends(compile_game_logic, compile_godot_cpp)
 
 # ----------------------------------------------------------------------------------------------- #
