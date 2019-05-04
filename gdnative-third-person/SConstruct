@@ -51,7 +51,7 @@ godot_environment = nuclex.create_godot_environment()
 Execute(godot_cpp.generate_gdnative_api_json(godot_environment, godot_cpp_directory))
 
 cplusplus_environment = nuclex.create_cplusplus_environment()
-Execute(godot_cpp.compile(cplusplus_environment, godot_cpp_directory))
+godot_cpp.compile(cplusplus_environment, godot_cpp_directory)
 
 
 # 3. Compile the GDnative library specific to this game
@@ -60,7 +60,10 @@ Execute(godot_cpp.compile(cplusplus_environment, godot_cpp_directory))
 # this will only trigger after the Godot-CPP has been built. If not, well,
 # you'll get an error about a missing library here...
 #
-compile_game_logic = environment.SConscript('addons/example-cpp/SConstruct')
+example_cpp_directory = os.path.join('addons', 'example-cpp')
+compile_game_logic = environment.SConscript(os.path.join(example_cpp_directory, 'SConstruct'))
+
 #Depends(compile_game_logic, compile_godot_cpp)
+Depends(example_cpp_directory, godot_cpp_directory)
 
 # ----------------------------------------------------------------------------------------------- #

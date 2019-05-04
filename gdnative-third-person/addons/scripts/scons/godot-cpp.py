@@ -39,7 +39,7 @@ def check_godot_headers_directory(environment, godot_cpp_directory):
     @param  godot_cpp_directory  Directory into which Godot-CPP was checked out
     @returns True if the godot_headers subdirectory is complete, False otherwise"""
 
-    configure_godot_headers = Configure(environment)
+    #configure_godot_headers = Configure(environment)
 
     godot_headers_directory = os.path.join(godot_cpp_directory, 'godot_headers')
 
