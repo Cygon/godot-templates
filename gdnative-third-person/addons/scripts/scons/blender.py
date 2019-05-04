@@ -13,10 +13,10 @@ if platform.system() == 'Windows':
 # Paths in which the Blender executables can be found on Windows systems
 _blender_windows_path = {
     '2.7': [
-        '%ProgramFiles%\\Blender Foundation\Blender\blender.exe'
+        '%ProgramFiles%\\Blender Foundation\\Blender\\blender.exe'
     ],
     '2.8': [
-        '%ProgramFiles%\\Blender Foundation\Blender\blender.exe'
+        '%ProgramFiles%\\Blender Foundation\\Blender\\blender.exe'
     ]
 }
 
@@ -25,34 +25,17 @@ _default_blender_version = '2.7'
 
 # ----------------------------------------------------------------------------------------------- #
 
-def register_extension_methods(environment):
+def setup(environment):
     """Registers extension methods for Blender exporting into a SCons environment
 
     @param  environment  Environment the extension methods will be registered to"""
 
-    environment.AddMethod(_export_fbx, "export_fbx")
-    environment.AddMethod(_export_collada, "export_collada")
+    environment.AddMethod(_export_fbx_or_collada, "export_fbx")
+    environment.AddMethod(_export_fbx_or_collada, "export_collada")
     environment.AddMethod(_export_gltf, "export_gltf")
     environment.AddMethod(_export_animations_fbx_or_collada, "export_animations_fbx")
     environment.AddMethod(_export_animations_fbx_or_collada, "export_animations_collada")
     environment.AddMethod(_export_animations_gltf, "export_animations_gltf")
-
-# ----------------------------------------------------------------------------------------------- #
-
-def _enumerate_subdirectories(root_directory, ignored_directories=['bin', 'obj']):
-    """Enumerates the subdirectories inside a directory
-
-    @param  root_directory       Directory whose direct subdirectories will be enumerated
-    @param  ignored_directories  Directories to ignore if encountered"""
-
-    directories = []
-
-    for entry in os.listdir(root_directory):
-        if os.path.isdir(entry):
-            if not any(entry in s for s in ignored_directories):
-                directories.append(entry)
-
-    return directories
 
 # ----------------------------------------------------------------------------------------------- #
 
@@ -191,11 +174,11 @@ def _find_blender_in_windows_registry():
 
 # ----------------------------------------------------------------------------------------------- #
 
-def _export_fbx(environment, target_path, blendfile_path, meshes = None):
-    """Exports a blendfile to FBX
+def _export_fbx_or_collada(environment, target_path, blendfile_path, meshes = None):
+    """Exports a blendfile to FBX or Collada
 
     @param  environment     SCons environment in which the export will be done
-    @param  target_path     Path in which the target FBX file will be saved
+    @param  target_path     Path in which the target file will be saved
     @param  blendfile_path  Path of the source blendfile containing the meshes
     @param  meshes          List of meshes that will be exported"""
 
@@ -212,47 +195,8 @@ def _export_fbx(environment, target_path, blendfile_path, meshes = None):
         for mesh in meshes:
             extra_arguments += ' ' + mesh
 
-    # Finally, invoke MSBuild, telling SCons about which files are its inputs
-    # and which files will be produced to the best of our ability
-    return environment.Command(
-        source = blendfile_path,
-        action = (
-            '"' + blender_executable + '" "$SOURCE"' +
-            ' --enable-autoexec' +
-            ' --python "' + absolute_script_path + '"' +
-            ' --background' +
-            ' --' +
-            ' $TARGET ' +
-            extra_arguments
-        ),
-        target = target_path
-    )
-
-# ----------------------------------------------------------------------------------------------- #
-
-def _export_collada(environment, target_path, blendfile_path, meshes = None):
-    """Exports a blendfile to Collada
-
-    @param  environment     SCons environment in which the export will be done
-    @param  target_path     Path in which the target Collada file will be saved
-    @param  blendfile_path  Path of the source blendfile containing the meshes
-    @param  meshes          List of meshes that will be exported"""
-
-    blender_executable = _find_blender_executable(environment, _default_blender_version)
-    if blender_executable is None:
-        raise FileNotFoundError("Could not locate a Blender executable")
-
-    own_directory = os.path.dirname(__file__)
-    relative_script_path = os.path.join(own_directory, 'blender-export-meshes.py')
-    absolute_script_path = environment.File('#' + relative_script_path).srcnode().abspath
-
-    extra_arguments = str()
-    if not (meshes is None):
-        for mesh in meshes:
-            extra_arguments += ' ' + mesh
-
-    # Finally, invoke MSBuild, telling SCons about which files are its inputs
-    # and which files will be produced to the best of our ability
+    # Finally, invoke Blender to export the model using an export script that
+    # gets executed by Blender itself
     return environment.Command(
         source = blendfile_path,
         action = (
@@ -277,10 +221,10 @@ def _export_gltf(environment):
 def _export_animations_fbx_or_collada(
     environment, target_path, actor_blendfile_path, animation_blendfile_path, animations = None
 ):
-    """Exports only the animations in a blendfile to FBX
+    """Exports only the animations in a blendfile to FBX or Collada
 
     @param  environment               SCons environment in which the export will be done
-    @param  target_path               Path in which the target FBX file will be saved
+    @param  target_path               Path in which the target file will be saved
     @param  actor_blendfile_path      Path of the blendfile containing the rigged actor
     @param  animation_blendfile_path  Path of the blendfile containing the animations
     @param  animations                List of animations that will be exported"""
@@ -300,8 +244,8 @@ def _export_animations_fbx_or_collada(
         for animation in animations:
             extra_arguments += ' ' + animation
 
-    # Finally, invoke MSBuild, telling SCons about which files are its inputs
-    # and which files will be produced to the best of our ability
+    # Finally, invoke Blender to export the model using an animation export script that
+    # gets executed by Blender itself
     export_command = environment.Command(
         source = actor_blendfile_path,
         action = (

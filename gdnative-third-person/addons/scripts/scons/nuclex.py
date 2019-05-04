@@ -19,6 +19,7 @@ shared = importlib.import_module('shared')
 cplusplus = importlib.import_module('cplusplus')
 dotnet = importlib.import_module('dotnet')
 blender = importlib.import_module('blender')
+godot = importlib.import_module('godot')
 
 # Plan:
 #   - if TARGET_ARCH is set, use it. For multi-builds,
@@ -58,7 +59,7 @@ def create_cplusplus_environment():
         REFERENCES_DIRECTORY = 'References'
     )
 
-    # Extension methods from the C/C== module
+    # Extension methods from the C/C++ module
     cplusplus.setup(environment)
 
     # Nuclex standard build settings and extensions
@@ -95,7 +96,7 @@ def create_dotnet_environment():
 # ----------------------------------------------------------------------------------------------- #
 
 def create_blender_environment():
-    """Creates a new environment with the required variables for export Blender models
+    """Creates a new environment with the required variables to export Blender models
 
     @returns A new scons environment set up for Blender exports"""
 
@@ -103,8 +104,30 @@ def create_blender_environment():
         variables = _parse_default_command_line_options()
     )
 
+    # Extension methods for Blender
+    blender.setup(environment)
+
     _register_generic_extension_methods(environment)
     _register_blender_extension_methods(environment)
+
+    return environment
+
+# ----------------------------------------------------------------------------------------------- #
+
+def create_godot_environment():
+    """Creates a new environment with the required variables to export Godot games
+
+    @returns A new scons environment set up for Godot exports"""
+
+    environment = Environment(
+        variables = _parse_default_command_line_options()
+    )
+
+    # Extension methods for Blender
+    godot.setup(environment)
+
+    _register_generic_extension_methods(environment)
+    _register_godot_extension_methods(environment)
 
     return environment
 
@@ -256,7 +279,18 @@ def _register_blender_extension_methods(environment):
 
     @param  environment  Environment the extension methods will be registered to"""
 
-    blender.register_extension_methods(environment)
+    #blender.register_extension_methods(environment)
+    pass
+
+# ----------------------------------------------------------------------------------------------- #
+
+def _register_godot_extension_methods(environment):
+    """Registers extension methods for Godot exports into a SCons environment
+
+    @param  environment  Environment the extension methods will be registered to"""
+
+    #godot.register_extension_methods(environment)
+    pass
 
 # ----------------------------------------------------------------------------------------------- #
 

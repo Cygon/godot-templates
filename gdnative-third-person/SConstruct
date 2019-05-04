@@ -9,32 +9,20 @@ import SCons
 # Nuclex SCons libraries
 sys.path.append('addons/scripts/scons')
 nuclex = importlib.import_module('nuclex')
+godot_cpp = importlib.import_module('godot-cpp') # Special module to compile Godot-CPP
+
+# To understand this:
+#
+# SCons is not an imperative build language where you simply state "do X, then do Y".
+# Instead, all these commands tell SCons stuff like "inputs A&B go through tool X and
+# produce output Y". SCons then builds a graph of what builds what (you can view
+# the dependency tree by calling SCons with --tree=all).
+#
+# So a good SCons script completely and accurately tells SCons all tools involved
+# with every input and output. Called with -j8 (8 = number of CPU cores), SCons will
+# parallelize the heck out of the build, doing everything in parallel that possibly can.
 
 # ----------------------------------------------------------------------------------------------- #
-
-def _get_godot_cpp_library_name(environment):
-    """Returns the name of the library built by the Godot-CPP build script.
-    I don't like hardcoding this, but it's the only way of getting this.
-
-    @param  environment  SCons environment from which Godot-CPP is being built
-    @returns The filename of the library produced when compiling Godot-CPP"""
-
-    if platform.system() == 'Windows':
-        if environment.is_debug_build():
-            return 'libgodot-cpp.windows.debug.64.lib'
-        else:
-            return 'libgodot-cpp.windows.release.64.lib'
-    else:
-        if environment.is_debug_build():
-            return 'libgodot-cpp.linux.debug.64.a'
-        else:
-            return 'libgodot-cpp.linux.release.64.a'
-
-
-# ----------------------------------------------------------------------------------------------- #
-
-environment = nuclex.create_generic_environment()
-
 
 # 1. Export all Blender models to Collada
 #
@@ -42,28 +30,28 @@ environment = nuclex.create_generic_environment()
 # directory and builds them with SCons. Since SCons keeps track of all inputs and
 # generated outputs, this will intelligently only process changed files.
 #
+environment = nuclex.create_generic_environment()
 nuclex.build_all(environment, 'Game')
 
 
 # 2. Compile Godot-CPP, a wrapper library we require
 #
-# If wish I could to this via env.SConscript() to parallelize the build steps
-# inside the SConstruct file alongside all the others, but I haven't found a
-# way to pass the parameters (target=debug, etc.) along yet.
+# Big issue: the SConstruct file of Godot-CPP is not suitable for calling
+# via SConstruct. It also generates some headers, dependencies our example-cpp
+# build needs, but which SCons can't magically discover through the include
+# directories if they haven't been generated yet.
 #
-godot_cpp_library_path = os.path.join(
-    'addons', 'godot-cpp', 'bin', _get_godot_cpp_library_name(environment)
-)
-if environment.is_debug_build():
-    godot_cpp_library_target='debug'
-else:
-    godot_cpp_library_target='release'
+# Thus, we sidestep SCons amazing dependency tree and execute the nested
+# build immediately...
+#
+godot_cpp_directory = os.path.join('addons', 'godot-cpp')
+godot_cpp.check_godot_headers_directory(environment, godot_cpp_directory)
 
-environment.build_scons(
-    source = 'addons/godot-cpp/SConstruct',
-    arguments = '-j8 --directory=${SOURCE.dir} bits=64 target=' + godot_cpp_library_target,
-    target = godot_cpp_library_path
-)
+godot_environment = nuclex.create_godot_environment()
+Execute(godot_cpp.generate_gdnative_api_json(godot_environment, godot_cpp_directory))
+
+cplusplus_environment = nuclex.create_cplusplus_environment()
+Execute(godot_cpp.compile(cplusplus_environment, godot_cpp_directory))
 
 
 # 3. Compile the GDnative library specific to this game
@@ -72,6 +60,7 @@ environment.build_scons(
 # this will only trigger after the Godot-CPP has been built. If not, well,
 # you'll get an error about a missing library here...
 #
-compile_game_logic = environment.SConscript('addons/example-cpp/SConstruct')
+#compile_game_logic = environment.SConscript('addons/example-cpp/SConstruct')
+#Depends(compile_game_logic, compile_godot_cpp)
 
 # ----------------------------------------------------------------------------------------------- #
