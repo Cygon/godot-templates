@@ -7,6 +7,11 @@ import platform
 import errno
 from SCons.Script import Configure
 
+# ----------------------------------------------------------------------------------------------- #
+
+# Subset of the files in the godot_headers submodule, to verify that it has been
+# downloaded from Git. Forgetting --recurse-submodules in the checkout command is
+# a popular mistake :)
 godot_headers_files_subset = [
       'README.md',
       os.path.join('gdnative', 'aabb.h'),
@@ -52,7 +57,7 @@ def check_godot_headers_directory(environment, godot_cpp_directory):
         #    is_complete = False
 
     if is_complete:
-        print("\033[92mGodot-CPP appears to be complete, with godot_headers submodule\033[0m")
+        print("\033[92mGodot-CPP appears to be complete and include the godot_headers submodule\033[0m")
     else:
         print("\033[95mERROR: The godot_headers directory seems to be incomplete.\033[0m")
         print("\033[95m       This is a git submodule of Godot-CPP and needs to be\033[0m")
@@ -100,11 +105,30 @@ def compile(environment, godot_cpp_directory):
     else:
         godot_cpp_build_type = 'release'
 
+
+    # We only want to pass 'generate_bindings=yes' if the bindings aren't
+    # generated yet. This will cause one unneccessary rebuild, but it seems
+    # generating the binding would instead cause a rebuild *every* time.
+    #
+    # Maybe some issue with the Godot-CPP SConstruct file?
+    generated_headers_directory = os.path.join(godot_cpp_directory, 'include', 'gen')
+    generated_sources_directory = os.path.join(godot_cpp_directory, 'src', 'gen')
+
+    header_count = 0
+    if os.path.isdir(generated_sources_directory):
+        header_count = len(os.listdir(generated_headers_directory))
+
+    source_count = 0
+    if os.path.isdir(generated_headers_directory):
+        source_count = len(os.listdir(generated_sources_directory))
+
     additional_arguments = (
         ' platform=' + godot_cpp_platform +
-        ' target=' + godot_cpp_build_type +
-        ' generate_bindings=yes'
+        ' target=' + godot_cpp_build_type
     )
+
+    if (header_count == 0) or (source_count == 0):
+        additional_arguments += ' generate_bindings=yes'
 
     input_files_subset = []
 

@@ -24,25 +24,35 @@ _godot_template_urls = {
 # Name of the Godot executables when using an official build or git build
 _godot_executables = {
     '3.0': [
-        'Godot_v3.0.6-stable_linux_headless.64',
         'Godot_v3.0.6-stable_x11.64',
         'Godot_v3.0.6-stable_win64.exe'
     ],
     '3.1': [
-        'Godot_v3.1.1-stable_linux_headless.64',
         'Godot_v3.1.1-stable_x11.64',
         'Godot_v3.1.1-stable_win64.exe',
-        'Godot_v3.1-stable_linux_headless.64',
         'Godot_v3.1-stable_x11.64',
         'Godot_v3.1-stable_win64.exe'
     ],
     'git': [
-        'godot_headless.x11.tools.64',
-        'godot_headless.x11.opt.tools.64',
         'godot.x11.tools.64',
         'godot.x11.opt.tools.64',
 	'godot.windows.tools.64.exe',
 	'godot.windows.opt.tools.64.exe'
+    ]
+}
+
+# Name of the headless Godot executables when using an official build or git build
+_godot_headless_executables = {
+    '3.0': [
+        'Godot_v3.0.6-stable_linux_headless.64'
+    ],
+    '3.1': [
+        'Godot_v3.1.1-stable_linux_headless.64',
+        'Godot_v3.1-stable_linux_headless.64'
+    ],
+    'git': [
+        'godot_headless.x11.tools.64',
+        'godot_headless.x11.opt.tools.64'
     ]
 }
 
@@ -119,9 +129,10 @@ def _recursively_collect_assets(assets, directory):
 
 # ----------------------------------------------------------------------------------------------- #
 
-def _find_godot_executable(godot_version):
+def _find_godot_executable(godot_version, headless = True):
     """Locates a suitable Godot executable on the current system.
 
+    @param  headless       Whether to include and prefer the headless Godot version
     @param  godot_version  Version number of Godot that is requested (i.e. '3.0' or '3.1')
     @returns The absolute path of a Godot executable."""
 
@@ -147,6 +158,22 @@ def _find_godot_executable(godot_version):
     # Now check all potential install locations for the Godot executable
     # in the version wanted by the user
     for directory in candidate_directories:
+
+        if headless:
+
+            # Check within the 'bin' directory if one exists
+            bin_directory = os.path.join(directory, 'bin')
+            if os.path.isdir(bin_directory):
+                for executable_name in _godot_headless_executables[godot_version]:
+                    candidate_path = os.path.join(bin_directory, executable_name)
+                    if os.path.isfile(candidate_path):
+                        return candidate_path
+
+            # Check the candidate directory itself
+            for executable_name in _godot_headless_executables[godot_version]:
+                candidate_path = os.path.join(directory, executable_name)
+                if os.path.isfile(candidate_path):
+                    return candidate_path
 
         # Check within the 'bin' directory if one exists
         bin_directory = os.path.join(directory, 'bin')
