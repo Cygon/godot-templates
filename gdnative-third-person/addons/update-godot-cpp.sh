@@ -13,21 +13,24 @@ git clone \
 	--depth 1 \
 	https://github.com/GodotNativeTools/godot-cpp
 
+
+# This is now done by the master SConstruct file in the project root
+
 # Generate headers for the installed godot version
-/opt/godot-git/bin/godot.x11.opt.tools.64 \
-	--gdnative-generate-json-api godot-cpp/godot_headers/api.json
-
+#/opt/godot-git/bin/godot.x11.opt.tools.64 \
+#	--gdnative-generate-json-api godot-cpp/godot_headers/api.json
+#
 # Compile godot-cpp
-pushd .
-cd godot-cpp
-
-scons -j15 platform=linux bits=64 generate_bindings=yes
-
+#pushd .
+#cd godot-cpp
+#
+#scons -j15 platform=linux bits=64 generate_bindings=yes
+#
 # This is now done by the main build script
 #scons -j15 \
 #	godotbinpath="/opt/godot-git/bin/godot.x11.opt.tools.64" \
 #	platform=linux \
 #	bits=64
 #
-
-popd
+#
+#popd
